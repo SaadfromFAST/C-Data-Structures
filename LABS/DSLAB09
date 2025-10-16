@@ -1,1 +1,387 @@
+#pragma once
+#include <iostream>
+using namespace std;
 
+struct node {
+	int ID;
+	string name;
+	float GPA;
+	int semester;
+	node* left;
+	node* right;
+
+	node() {
+		ID = -1;
+		name = "";
+		GPA = -1;
+		semester = -1;
+		left = right = NULL;
+	}
+};
+
+
+class StudentTree {
+	node* root;
+	int counter;
+
+public:
+	StudentTree() {
+		root = NULL;
+		counter = 0;
+	}
+
+	void insertStudent(int id, string n, float gpa, int sem) {
+		node* temp = new node;
+		temp->ID = id;
+		temp->GPA = gpa;
+		temp->name = n;
+		temp->semester = sem;
+
+		if (root == NULL) {
+			root = temp;
+			counter++;
+			return;
+		}
+		else {
+			counter++;
+			insertfunc(root, temp);
+		}
+	}
+
+	void insertfunc(node* p, node* temp) {
+		if (p->left == NULL) {
+			p->left = temp;
+			return;
+		}
+		else if (p->right == NULL) {
+			p->right = temp;
+			return;
+		}
+		insertfunc(p->left, temp);
+	}
+
+
+	int totalNodes() {
+		return counter;
+	}
+
+	void display() {
+		if (root == NULL) {
+			cout << "The tree is empty\n";
+			return;
+		}
+		else {
+			displayfunc(root);
+		}
+			
+	}
+
+	void displayfunc(node* p) {
+		if (p == NULL) {
+			return;
+		}
+		cout << p->ID << " ";
+		displayfunc(p->left);
+		displayfunc(p->right);
+	}
+
+	void updateStudent(int id, string n, float gpa, int sem) {
+		if (root == NULL)
+			return;
+
+		else {
+			node* p = updaterecursive(root, id);
+			if (p != NULL) {
+				p->name = n;
+				p->ID = id;
+				p->GPA = gpa;
+				p->semester = sem;
+			}
+		}
+	}
+
+	node* updaterecursive(node* p, int id) {
+		if (p->ID == id) {
+			return p;
+		}
+		else if (p->right == NULL && p->left == NULL) {
+			return NULL;
+		}
+		else {
+			updaterecursive(p->left,id);
+			updaterecursive(p->right, id);
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------------
+	// Helper to find rightmost node and its parent in a subtree
+	void findRightmostWithParent(node* root, node*& rightmost, node*& parent) {
+		parent = nullptr;
+		rightmost = root;
+		while (rightmost != nullptr && rightmost->right != nullptr) {
+			parent = rightmost;
+			rightmost = rightmost->right;
+		}
+	}
+	node* findID(node* p, int id) {
+		if (p == NULL)
+			return NULL;
+
+		if (p->ID == id)
+			return p;
+
+		node* leftResult = findID(p->left, id);
+		if (leftResult != NULL)
+			return leftResult;
+
+		return findID(p->right, id);
+	}
+
+
+	void deleteStudent(int id) {
+		if (root == NULL)
+			return;
+
+		node* q = findID(root, id);
+		if (q == NULL)
+			return;
+
+		// Delete leaf node q
+		if (q->left == NULL && q->right == NULL) {
+			// Find parent of q
+			node* parent = NULL;
+			if (root == q) {
+				delete root;
+				root = NULL;
+				counter--;
+				return;
+			}
+
+			node* curr = root;
+			while (curr != NULL && curr != q) {
+				parent = curr;
+				// Since no BST ordering guaranteed, check children explicitly:
+				if (curr->left == q || curr->right == q)
+					break;
+				// Move deeper - try left first, else right
+				if (curr->left != NULL)
+					curr = curr->left;
+				else
+					curr = curr->right;
+			}
+
+			if (parent != NULL) {
+				if (parent->left == q)
+					parent->left = NULL;
+				else if (parent->right == q)
+					parent->right = NULL;
+			}
+			delete q;
+			counter--;
+			return;
+		}
+
+		// If q has a left subtree, replace q with rightmost node of left subtree
+		if (q->left != NULL) {
+			node* p = NULL;
+			node* pParent = NULL;
+			findRightmostWithParent(q->left, p, pParent);
+
+			// Copy data from p to q
+			q->ID = p->ID;
+			q->name = p->name;
+			q->GPA = p->GPA;
+			q->semester = p->semester;
+
+			// Remove p from tree
+			if (pParent != NULL)
+				pParent->right = p->left;  // p->right is NULL by definition here
+			else
+				q->left = p->left;
+
+			delete p;
+			counter--;
+		}
+		// Else replace q with leftmost node of right subtree
+		else if (q->right != NULL) {
+			node* pParent = q;
+			node* p = q->right;
+			while (p->left != NULL) {
+				pParent = p;
+				p = p->left;
+			}
+
+			// Copy data from p to q
+			q->ID = p->ID;
+			q->name = p->name;
+			q->GPA = p->GPA;
+			q->semester = p->semester;
+
+			// Remove p from tree
+			if (pParent->left == p)
+				pParent->left = p->right;
+			else
+				pParent->right = p->right;
+
+			delete p;
+			counter--;
+		}
+	}
+
+
+	/*void deleteStudent(int id) {
+		if (root == NULL)
+			return;
+
+		else {
+			node* p = findrightmost(root);
+			node* q = findID(root, id);
+			if (p == NULL || q == NULL)
+				return;
+			q->GPA = p->GPA;
+			q->ID = p->ID;
+			q->name = p->name;
+			q->semester = p->semester;
+			counter--;
+
+			delete p;
+			p = NULL;
+		}
+	}
+
+	node* findrightmost(node* p) {
+		if (root->right != NULL)
+			return root->right;
+		else {
+			if (p->right != NULL) {
+				return p->right;
+			}
+			if (p->left == NULL) {
+				return p;
+			}
+			findrightmost(p->left);
+		}
+	}*/
+
+	
+
+
+	/*node* findID(node* p, int id) {
+		if (p->ID == id)
+			return p;
+		if (p->left == NULL) {
+			return NULL;
+		}
+
+		findID(p->left, id);
+		
+		if (p->right == NULL) {
+			return NULL;
+		}
+
+		findID(p->right, id);
+		
+	}
+
+	void deleteStudent(int id) {
+		
+		node*p =findID(root, id);
+		if(p)
+			counter--;
+	}*/
+
+	int totalLeaves() {
+		int count = 0;
+		if (root == NULL) {
+			return 0;
+		}
+		else {
+			node* p = root;
+			leavesrecur(root, count);
+		}
+		return count;
+	}
+
+	void leavesrecur(node* p, int &n) {
+		if (p->left == NULL && p->right == NULL) {
+			n++;
+			return;
+		}
+		else {
+			leavesrecur(p->left, n);
+			leavesrecur(p->right, n);
+		}
+	}
+
+	int heightTree() {
+		int count = 1;
+		if (root == NULL) {
+			return -1;
+		}
+		else {
+			heightrecur(root, count);
+			return count;
+		}
+	}
+
+	void heightrecur(node* p, int& n) {
+		//if (p->left == NULL)
+		if (p == NULL)
+			return;
+		else {
+			n++;
+			heightrecur(p->left, n);
+		}
+	}
+
+	float averageGPA() {
+		float num = 0;
+		if (root == NULL) {
+			return 0;
+		}
+		else {
+			GPArecur(root, num);
+		}
+	}
+
+	void GPArecur(node* p, float& n) {
+		if (p->left == NULL && p->right == NULL)
+			return;
+		else {
+			n += p->GPA;
+			GPArecur(p->left, n);
+			GPArecur(p->right, n);
+		}
+	}
+
+
+	void topStudent() {
+		if (root == NULL) {
+			cout << "Nothing exists!!\n";
+			return;
+		}
+		else {
+			float gpa = root->GPA;
+			toprecur(root, gpa);
+			cout << gpa << endl;
+		}
+	}
+
+	void toprecur(node* p, float &gpa) {
+		if (p == NULL)
+			return;
+
+		else {
+			if (gpa < p->GPA) {
+				gpa = p->GPA;
+			}
+			toprecur(p->left, gpa);
+
+			if (p == NULL)
+				return;
+
+			toprecur(p->right, gpa);
+		}
+	}
+
+};
