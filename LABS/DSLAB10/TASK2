@@ -1,0 +1,181 @@
+#pragma once
+#include <iostream>
+#include "Header.h"
+using namespace std;
+
+
+class Node {
+public:
+    int data;
+    Node* left;
+    Node* right;
+
+    Node(int value) {
+        data = value;
+        left = nullptr;
+        right = nullptr;
+    }
+};
+
+
+class BinaryTree {
+private:
+    Node* root;
+
+public:
+    BinaryTree() {
+        root = nullptr;
+    }
+
+    // Get root node
+    Node* getRoot() {
+        return root;
+    }
+
+
+    Node* buildFromArray(int arr[], int n) {
+        if (n == 0) {
+            root = nullptr;
+            return nullptr;
+        }
+
+
+        root = new Node(arr[0]);
+
+        if (n == 1) {
+            return root;
+        }
+
+        myQueue q;
+        q.enqueue(root);
+        int i = 1;
+
+        while (i < n && !q.isEmpty()) {
+            Node* current = (Node*)q.dequeue();
+
+
+            if (i < n) {
+                current->left = new Node(arr[i]);
+                q.enqueue(current->left);
+                i++;
+            }
+
+
+            if (i < n) {
+                current->right = new Node(arr[i]);
+                q.enqueue(current->right);
+                i++;
+            }
+        }
+
+        return root;
+    }
+
+
+    void displayLevelOrder() {
+        if (root == nullptr) {
+            cout << "Tree is empty." << endl;
+            return;
+        }
+
+        myQueue q;
+        q.enqueue(root);
+
+        while (!q.isEmpty()) {
+            Node* current = (Node*)q.dequeue();
+            cout << current->data << " ";
+
+            if (current->left != nullptr) {
+                q.enqueue(current->left);
+            }
+            if (current->right != nullptr) {
+                q.enqueue(current->right);
+            }
+        }
+        cout << endl;
+    }
+
+
+    void toArray() {
+        if (root == nullptr) {
+            cout << "Tree is empty." << endl;
+            return;
+        }
+
+        myQueue q;
+        q.enqueue(root);
+
+        cout << "[";
+        bool first = true;
+
+        while (!q.isEmpty()) {
+            Node* current = (Node*)q.dequeue();
+
+            if (!first) {
+                cout << " ";
+            }
+            cout << current->data;
+            first = false;
+
+            if (current->left != nullptr) {
+                q.enqueue(current->left);
+            }
+            if (current->right != nullptr) {
+                q.enqueue(current->right);
+            }
+        }
+        cout << "]" << endl;
+    }
+
+
+    int countNodes(Node* node) {
+        if (node == nullptr) {
+            return 0;
+        }
+
+        int count = 0;
+        myQueue q;
+        q.enqueue(node);
+
+        while (!q.isEmpty()) {
+            Node* current = (Node*)q.dequeue();
+            count++;
+
+            if (current->left != nullptr) {
+                q.enqueue(current->left);
+            }
+            if (current->right != nullptr) {
+                q.enqueue(current->right);
+            }
+        }
+
+        return count;
+    }
+
+
+    void displayNodeCount() {
+        int total = countNodes(root);
+        cout << "Total nodes: " << total << endl;
+    }
+
+
+    ~BinaryTree() {
+        if (root == nullptr) return;
+
+        myQueue q;
+        q.enqueue(root);
+
+        while (!q.isEmpty()) {
+            Node* current = (Node*)q.dequeue();
+
+            if (current->left != nullptr) {
+                q.enqueue(current->left);
+            }
+            if (current->right != nullptr) {
+                q.enqueue(current->right);
+            }
+
+            delete current;
+        }
+    }
+};
