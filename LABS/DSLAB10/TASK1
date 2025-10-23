@@ -1,0 +1,64 @@
+#pragma once
+#include <iostream>
+#include <string>
+using namespace std;
+
+// ======================================================
+// Helper Queue (No STL Allowed)
+// ======================================================
+class NodeQ {
+public:
+    void* data;   // will store EmployeeNode*
+    NodeQ* next;
+    NodeQ(void* d) {
+        data = d;
+        next = nullptr;
+    }
+};
+
+class myQueue {
+private:
+    NodeQ* front;
+    NodeQ* rear;
+    int currSize;
+
+public:
+    myQueue() {
+        front = rear = nullptr;
+        currSize = 0;
+    }
+
+    bool isEmpty() {
+        return front == nullptr;
+    }
+
+    void enqueue(void* d) {
+        NodeQ* n = new NodeQ(d);
+        if (isEmpty()) {
+            front = rear = n;
+        }
+        else {
+            rear->next = n;
+            rear = n;
+        }
+        currSize++;
+    }
+
+    void* dequeue() {
+        if (isEmpty()) return nullptr;
+        NodeQ* temp = front;
+        void* val = temp->data;
+        front = front->next;
+        if (front == nullptr) rear = nullptr;
+        delete temp;
+        currSize--;
+        return val;
+    }
+
+    void* getFront() {
+        if (isEmpty()) return nullptr;
+        return front->data;
+    }
+
+    int size() { return currSize; }
+};
