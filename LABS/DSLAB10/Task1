@@ -1,0 +1,284 @@
+#pragma once
+#include <iostream>
+#include "Header.h"
+using namespace std;
+
+
+
+class EmployeeNode {
+public:
+    int id;
+    string name;
+    string designation;
+    string department;
+    EmployeeNode* left;
+    EmployeeNode* right;
+
+    EmployeeNode(int empID, string empName, string empDesig, string empDept) {
+        id = empID;
+        name = empName;
+        designation = empDesig;
+        department = empDept;
+        left = nullptr;
+        right = nullptr;
+    }
+};
+
+
+class OrganizationTree {
+private:
+    EmployeeNode* root;
+
+
+    EmployeeNode* findDeepestRightmost(EmployeeNode*& parent) {
+        if (root == nullptr) return nullptr;
+
+        myQueue q;
+        q.enqueue(root);
+        EmployeeNode* deepest = nullptr;
+        parent = nullptr;
+
+        while (!q.isEmpty()) {
+            EmployeeNode* current = static_cast<EmployeeNode*>(q.dequeue());
+            deepest = current;
+
+            if (current->left != nullptr) {
+                parent = current;
+                q.enqueue(current->left);
+            }
+            if (current->right != nullptr) {
+                parent = current;
+                q.enqueue(current->right);
+            }
+        }
+        return deepest;
+    }
+
+
+    EmployeeNode* searchNodeWithParent(int empID, EmployeeNode*& parent) {
+        if (root == nullptr) return nullptr;
+
+        if (root->id == empID) {
+            parent = nullptr;
+            return root;
+        }
+
+        myQueue q;
+        q.enqueue(root);
+
+        while (!q.isEmpty()) {
+            EmployeeNode* current = static_cast<EmployeeNode*>(q.dequeue());
+
+            if (current->left != nullptr) {
+                if (current->left->id == empID) {
+                    parent = current;
+                    return current->left;
+                }
+                q.enqueue(current->left);
+            }
+
+            if (current->right != nullptr) {
+                if (current->right->id == empID) {
+                    parent = current;
+                    return current->right;
+                }
+                q.enqueue(current->right);
+            }
+        }
+        return nullptr;
+    }
+
+public:
+    OrganizationTree() {
+        root = nullptr;
+    }
+
+
+    void addEmployee(int empID, string empName, string empDesig, string empDept) {
+        EmployeeNode* newNode = new EmployeeNode(empID, empName, empDesig, empDept);
+
+        if (root == nullptr) {
+            root = newNode;
+            return;
+        }
+
+        myQueue q;
+        q.enqueue(root);
+
+        while (!q.isEmpty()) {
+            EmployeeNode* current = static_cast<EmployeeNode*>(q.dequeue());
+
+            if (current->left == nullptr) {
+                current->left = newNode;
+                return;
+            }
+            else {
+                q.enqueue(current->left);
+            }
+
+            if (current->right == nullptr) {
+                current->right = newNode;
+                return;
+            }
+            else {
+                q.enqueue(current->right);
+            }
+        }
+    }
+
+
+    void displayHierarchy() {
+        if (root == nullptr) {
+            cout << "No employees in the organization.\n";
+            return;
+        }
+
+        myQueue q;
+        q.enqueue(root);
+
+        while (!q.isEmpty()) {
+            EmployeeNode* current = static_cast<EmployeeNode*>(q.dequeue());
+            cout << "[" << current->id << " | " << current->name << " | "
+                << current->designation << " | " << current->department << "]\n";
+
+            if (current->left != nullptr) {
+                q.enqueue(current->left);
+            }
+            if (current->right != nullptr) {
+                q.enqueue(current->right);
+            }
+        }
+    }
+
+
+    EmployeeNode* searchByID(int empID) {
+        if (root == nullptr) return nullptr;
+
+        myQueue q;
+        q.enqueue(root);
+
+        while (!q.isEmpty()) {
+            EmployeeNode* current = static_cast<EmployeeNode*>(q.dequeue());
+
+            if (current->id == empID) {
+                return current;
+            }
+
+            if (current->left != nullptr) {
+                q.enqueue(current->left);
+            }
+            if (current->right != nullptr) {
+                q.enqueue(current->right);
+            }
+        }
+        return nullptr;
+    }
+
+
+    EmployeeNode* searchByName(string empName) {
+        if (root == nullptr) return nullptr;
+
+        myQueue q;
+        q.enqueue(root);
+
+        while (!q.isEmpty()) {
+            EmployeeNode* current = static_cast<EmployeeNode*>(q.dequeue());
+
+            if (current->name == empName) {
+                return current;
+            }
+
+            if (current->left != nullptr) {
+                q.enqueue(current->left);
+            }
+            if (current->right != nullptr) {
+                q.enqueue(current->right);
+            }
+        }
+        return nullptr;
+    }
+
+
+    void deleteEmployee(int empID) {
+        if (root == nullptr) return;
+
+
+        if (root->id == empID && root->left == nullptr && root->right == nullptr) {
+            delete root;
+            root = nullptr;
+            return;
+        }
+
+
+        EmployeeNode* parentOfTarget = nullptr;
+        EmployeeNode* target = searchNodeWithParent(empID, parentOfTarget);
+
+        if (target == nullptr) {
+            cout << "Employee not found.\n";
+            return;
+        }
+
+
+        EmployeeNode* parentOfDeepest = nullptr;
+        EmployeeNode* deepest = findDeepestRightmost(parentOfDeepest);
+
+        if (deepest == nullptr) return;
+
+
+        if (target == deepest) {
+            if (parentOfTarget == nullptr) {
+
+                delete root;
+                root = nullptr;
+            }
+            else {
+                if (parentOfTarget->left == target) {
+                    parentOfTarget->left = nullptr;
+                }
+                else {
+                    parentOfTarget->right = nullptr;
+                }
+                delete target;
+            }
+            return;
+        }
+
+
+        target->id = deepest->id;
+        target->name = deepest->name;
+        target->designation = deepest->designation;
+        target->department = deepest->department;
+
+
+        if (parentOfDeepest != nullptr) {
+            if (parentOfDeepest->right == deepest) {
+                parentOfDeepest->right = nullptr;
+            }
+            else if (parentOfDeepest->left == deepest) {
+                parentOfDeepest->left = nullptr;
+            }
+        }
+        delete deepest;
+    }
+
+
+    ~OrganizationTree() {
+        if (root == nullptr) return;
+
+        myQueue q;
+        q.enqueue(root);
+
+        while (!q.isEmpty()) {
+            EmployeeNode* current = static_cast<EmployeeNode*>(q.dequeue());
+
+            if (current->left != nullptr) {
+                q.enqueue(current->left);
+            }
+            if (current->right != nullptr) {
+                q.enqueue(current->right);
+            }
+
+            delete current;
+        }
+    }
+};
